@@ -5,18 +5,59 @@ const cors = require('cors');
 // const pool = require('./db');
 const {Pool} = require('pg');
 const dbConfig = require('./dbConfig');
-// const firebaseApp = require('firebase/app');
+// const db = require('./db');
+const dotenv = require('dotenv'); // Import dotenv
 
-const pool = new Pool({
-    connectionString: dbConfig.connectionString,
-    ssl: {
-        rejectUnauthorized: false, // Set to true in production with a valid certificate
-    },
-});
+// Load environment variables from .env file
+dotenv.config()
+
+let pool;
+
+const checkRemoteConnection = async () => {
+    try {
+        const tempPool = new Pool({
+            connectionString: dbConfig.connectionString,
+            ssl: {
+                rejectUnauthorized: false, // Set to true in production with a valid certificate
+            },
+        });
+
+        // Try connecting and immediately end the connection
+        await tempPool.connect();
+        tempPool.end();
+
+        return true;
+    } catch (error) {
+        console.error('Failed to connect to the remote server:', error.message);
+        return false;
+    }
+};
+
+// Perform the check and choose the database pool during server startup
+(async () => {
+    if (await checkRemoteConnection()) {
+        // If remote connection is successful, use remote pool
+        pool = new Pool({
+            connectionString: dbConfig.connectionString,
+            ssl: {
+                rejectUnauthorized: false, // Set to true in production with a valid certificate
+            },
+        });
+    } else {
+        // If remote connection fails, use a fallback local pool
+        pool = new Pool({
+            user: process.env.user,
+            password: process.env.password,
+            host: process.env.host,
+            port: process.env.port,
+            database: process.env.database,
+        });
+    }
+
 //middleware
 app.use(cors())
 app.use(express.json())
-// app.use(favicon(__dirname + '/public/favicon.png'));
+
 //ROUTES//
 
 //create a todo
@@ -89,3 +130,4 @@ app.delete('/todos/:id', async (req, res) => {
 app.listen(5000, () => {
     console.log('server has started on port 5000');
 })
+})()
