@@ -2,9 +2,17 @@ const express = require('express');
 const favicon = require('express-favicon');
 const app = express();
 const cors = require('cors');
-const pool = require('./db');
+// const pool = require('./db');
+const {Pool} = require('pg');
+const dbConfig = require('./dbConfig');
 // const firebaseApp = require('firebase/app');
 
+const pool = new Pool({
+    connectionString: dbConfig.connectionString,
+    ssl: {
+        rejectUnauthorized: false, // Set to true in production with a valid certificate
+    },
+});
 //middleware
 app.use(cors())
 app.use(express.json())
@@ -27,7 +35,7 @@ app.post("/todos", async (req, res) => {
 
 
 //get all todos
-app.get("/", async (req, res) => {
+app.get("/todos", async (req, res) => {
     try {
         const allTodos = await pool.query("SELECT * FROM todo")
         res.json(allTodos.rows);
@@ -69,7 +77,7 @@ app.put("/todos/:id", async (req, res) => {
 //delete a todo
 app.delete('/todos/:id', async (req, res) => {
     try {
-        const {id} = req.params
+        const { id } = req.params
         const deleteTodo = await pool.query("DELETE FROM todo WHERE todo_id = $1", [id])
 
         res.json(deleteTodo)
