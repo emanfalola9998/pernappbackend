@@ -1,5 +1,5 @@
 const express = require('express');
-const favicon = require('express-favicon');
+// const favicon = require('express-favicon');
 const app = express();
 const cors = require('cors');
 // const pool = require('./db');
@@ -16,7 +16,7 @@ const pool = new Pool({
 //middleware
 app.use(cors())
 app.use(express.json())
-app.use(favicon(__dirname + '/public/favicon.png'));
+// app.use(favicon(__dirname + '/public/favicon.png'));
 //ROUTES//
 
 //create a todo
